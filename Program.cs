@@ -1,109 +1,69 @@
-﻿using System;
-using System.CommandLine;
+﻿using System.CommandLine;
+using ManagePath;
+6
+\\
+var rootCommand = new RootCommand("Manage PATH environment variable");
+var pathCommand = new Command("path", "Manage the PATH environment variable");
 
-
-RootCommand rootCommand = new("Manage PATH environment variable");
-Command pathCommand = new("path", "Manage the PATH environment variable");
-
-Option<EnvironmentVariableTarget> targetOption = new("--target", "-t")
+var targetOption = new Option<EnvironmentVariableTarget>("--target", "-t")
 {
     Description = "Specify the target environment variable to manage (Process, User, Machine).",
     DefaultValueFactory = parseResult => EnvironmentVariableTarget.Process
 };
 
-Option<bool> numberOption = new("--number", "-n")
+var numberOption = new Option<bool>("--number", "-n")
 {
     Description = "Directories are numbered in the output.",
     DefaultValueFactory = parseResult => false
 };
-Option<bool> validateOption = new("--validate", "-v")
+
+var validateOption = new Option<bool>("--validate", "-v")
 {
     Description = "Validate that each directory exists and contains at least one executable file.",
     DefaultValueFactory = parseResult => false
 };
 
+var effectiveOption = new Option<bool>("--effective", "-e")
+{
+    Description = "Show the effective PATH considering all environment variable levels: Process, User, and Machine. This option overrides the --target option.",
+    DefaultValueFactory = parseResult => false
+};
 
+rootCommand.Add(pathCommand);
 
-rootCommand.Subcommands.Add(pathCommand);
-Command listCommand = new("list", "List the directories in the PATH environment variable")
+var listCommand = new Command("list", "List the directories in the PATH environment variable")
 {
     targetOption,
+    effectiveOption,
     numberOption,
     validateOption
 };
 
-pathCommand.Subcommands.Add(listCommand);
+pathCommand.Add(listCommand);
+
 listCommand.SetAction(parseResult =>
 {
-    string[] dirs = ReadPathVariable(
-        parseResult.GetValue(targetOption));
-    bool number = parseResult.GetValue(numberOption);
-    bool validate = parseResult.GetValue(validateOption);
-    int cnt = 0;
-    int invalidCnt = 0;
-    foreach (string dir in dirs)
-    {
-        if (string.IsNullOrWhiteSpace(dir))
-        {
-            continue;
-        }
-        cnt++;
-        if (number)
-        {
-            Console.Write($"{cnt}: ");
-        }
-        Console.WriteLine(dir);
-        if (validate)
-        {
-            if (System.IO.Directory.Exists(dir))
-            {
-                string[] exeFiles = System.IO.Directory.GetFiles(dir, "*.exe");
-                if (exeFiles.Length > 0)
-                {
-                    Console.WriteLine("    [Valid]");
-                }
-                else
-                {
-                    ++invalidCnt;
-                    Console.WriteLine("    [Invalid: No executable files found]");
-                }
-            }
-            else
-            {
-                ++invalidCnt;
-                Console.WriteLine("    [Invalid: Directory does not exist]");
-            }
-        }
-    }
-    if (invalidCnt > 0)
-    {
-        Console.WriteLine($"Total invalid directories: {invalidCnt}");
-    }
-    if (cnt == 0)
-    {
-        Console.WriteLine("The PATH environment variable is empty.");
-    }
-});
+    bool effective = parseResult.GetValue(effectiveOption);
+    bool showNumbers = parseResult.GetValue(numberOption);
+    bool showValidation = parseResult.GetValue(validateOption);
+    EnvironmentVariableTarget? target = effective ? null : parseResult.GetValue(targetOption);
 
-ParseResult parseResult = rootCommand.Parse(args);
-return parseResult.Invoke();
+    var pathService = new PathService();
+    var formatter = new PathFormatter();
 
-static string[] ReadPathVariable(EnvironmentVariableTarget? target)
-{
-    // The name of the environment variable is case-insensitive on Windows,
-    // but case-sensitive on Linux/macOS. 
-    // Using "PATH" (uppercase) is a common convention across platforms.
-    string[] dirs = Array.Empty<string>();
+    string[] directories = pathService.GetDirectories(target);
 
-    string? pathVariable = Environment.GetEnvironmentVariable("PATH", target ?? EnvironmentVariableTarget.Process);
-
-    if (pathVariable is null)
+    if (showValidation)
     {
-        Console.WriteLine($"Unable to get the {target} PATH environment variable");
+        var validator = new PathValidator();
+        var validatedEntries = validator.ValidateMany(directories);
+        formatter.Display(validatedEntries, showNumbers, showValidation: true);
     }
     else
     {
-        dirs = pathVariable.Split(System.IO.Path.PathSeparator);
+        formatter.DisplaySimple(directories, showNumbers);
     }
-    return dirs;
-}
+});
+
+var parseResult = rootCommand.Parse(args);
+return parseResult.Invoke();
