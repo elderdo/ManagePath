@@ -1,7 +1,6 @@
 ﻿using System.CommandLine;
 using ManagePath;
-6
-\\
+
 var rootCommand = new RootCommand("Manage PATH environment variable");
 var pathCommand = new Command("path", "Manage the PATH environment variable");
 
