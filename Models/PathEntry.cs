@@ -1,4 +1,4 @@
-namespace ManagePath;
+namespace ManagePath.Models;
 
 /// <summary>
 /// Represents a single directory entry from the PATH environment variable

@@ -1,4 +1,4 @@
-namespace ManagePath;
+namespace ManagePath.Services;
 
 /// <summary>
 /// Service for reading and parsing PATH environment variable.

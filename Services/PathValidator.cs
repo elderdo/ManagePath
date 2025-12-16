@@ -1,4 +1,4 @@
-namespace ManagePath;
+namespace ManagePath.Services;
 
 /// <summary>
 /// Validates PATH directories by checking existence and executable file presence.

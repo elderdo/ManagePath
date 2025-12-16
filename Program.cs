@@ -1,5 +1,4 @@
-﻿using System.CommandLine;
-using ManagePath;
+﻿// Program.cs uses global usings defined in GlobalUsings.cs
 
 var rootCommand = new RootCommand("Manage PATH environment variable");
 var pathCommand = new Command("path", "Manage the PATH environment variable");

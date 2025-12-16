@@ -1,4 +1,4 @@
-namespace ManagePath;
+namespace ManagePath.Formatters;
 
 /// <summary>
 /// Formats and displays PATH entries to the console.
