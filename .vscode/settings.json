@@ -4,6 +4,7 @@
         "COMMUN",
         "dbhome",
         "DOCUME",
+        "elderdo",
         "FIREFO",
         "ftype",
         "gnucobol",
@@ -18,6 +19,6 @@
         "STRAWB",
         "vscjava",
         "wbem",
-        "elderdo"
+        "Xunit"
     ]
 }
