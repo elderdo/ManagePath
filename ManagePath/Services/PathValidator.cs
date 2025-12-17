@@ -32,10 +32,28 @@ public class PathValidator
     /// <summary>
     /// Validates multiple directories.
     /// </summary>
+    /// <remarks>
+    /// This method uses LINQ's Select() projection to transform each directory path into a PathEntry.
+    /// 
+    /// The syntax "directories.Select(Validate)" is a method group conversion, which is shorthand for:
+    /// directories.Select(directory => Validate(directory))
+    /// 
+    /// Key concepts:
+    /// - Select() projects each element through a transform function (Validate in this case)
+    /// - Method group syntax allows passing the method name directly without lambda syntax
+    /// - Returns IEnumerable&lt;PathEntry&gt; with deferred execution (evaluated when enumerated)
+    /// - Functionally equivalent to a foreach loop creating a new collection, but more concise
+    /// 
+    /// Deferred execution means the validation only occurs when the result is enumerated
+    /// (e.g., via ToArray(), ToList(), foreach, or other enumeration operations).
+    /// </remarks>
     /// <param name="directories">Collection of directory paths to validate</param>
     /// <returns>Collection of PathEntry objects with validation results</returns>
     public IEnumerable<PathEntry> ValidateMany(IEnumerable<string> directories)
     {
+        // LINQ Select projection: transforms each string directory path into a PathEntry object
+        // Method group syntax: "Validate" is shorthand for "directory => Validate(directory)"
+        // This is a functional programming approach to mapping/transforming collections
         return directories.Select(Validate);
     }
 
