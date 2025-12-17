@@ -104,23 +104,58 @@ public class PathValidator
         }
     }
 
+    /// <summary>
+    /// Gets the default executable extensions based on the current platform.
+    /// </summary>
+    /// <remarks>
+    /// Windows: Reads from PATHEXT environment variable and adds custom extensions.
+    /// Unix/Linux/macOS: Returns empty array (uses file permissions instead).
+    /// 
+    /// IMPORTANT NOTE about .pl (Perl) files on Windows:
+    /// Adding .pl to this list only makes .pl files DETECTABLE as potential executables.
+    /// For .pl files to actually EXECUTE from the command line, you must configure Windows
+    /// file association using one of these methods:
+    /// 
+    /// Method 1: Via assoc and ftype commands (requires admin):
+    ///   assoc .pl=PerlScript
+    ///   ftype PerlScript="C:\Perl64\bin\perl.exe" "%1" %*
+    /// 
+    /// Method 2: Via Registry (requires admin):
+    ///   Add .PL to HKEY_CURRENT_USER\Environment\PATHEXT or
+    ///   HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Environment\PATHEXT
+    ///   Create association at HKEY_CLASSES_ROOT\.pl with Perl interpreter path
+    /// 
+    /// Without proper file association, .pl files will be treated as text files even if detected.
+    /// The association tells Windows to "Open with Perl" when you type the script name.
+    /// </remarks>
+    /// <returns>Array of executable file extensions (including dot), or empty array for Unix systems</returns>
     private static string[] GetDefaultExecutableExtensions()
     {
         if (OperatingSystem.IsWindows())
         {
+            // Read Windows PATHEXT environment variable which contains executable extensions
+            // Example: ".COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.PS1"
             string? pathExt = Environment.GetEnvironmentVariable("PATHEXT");
             if (pathExt != null)
             {
+                // Split by semicolon, remove empty entries
                 var extensions = pathExt.Split(';', StringSplitOptions.RemoveEmptyEntries);
-                // Add custom extensions not typically in PATHEXT
+
+                // LINQ Concat(): Combines two sequences into one
+                // new[] { ".pl", ".PL" } creates array of custom extensions to add
+                // Distinct(): Removes duplicates in case .pl already exists in PATHEXT
+                // ToArray(): Materializes the IEnumerable into a concrete array
+                // NOTE: .pl files require file association to be truly executable (see remarks)
                 return extensions.Concat(new[] { ".pl", ".PL" }).Distinct().ToArray();
             }
 
-            // Fallback if PATHEXT is not set
+            // Fallback if PATHEXT environment variable is not set (rare on Windows)
+            // Includes common Windows executable extensions plus custom .pl for Perl scripts
             return new[] { ".exe", ".bat", ".cmd", ".com", ".ps1", ".pl" };
         }
 
-        // Unix-like systems don't use extensions
+        // Unix-like systems (Linux/macOS) don't use file extensions to determine executability
+        // They use file permission bits (execute flag) instead
         return Array.Empty<string>();
     }
 }

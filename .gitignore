@@ -207,8 +207,8 @@ project.lock.json
 # Rider
 .idea/
 
-# Visual Studio Code
-.vscode/
+# Visual Studio Code - COMMENTED OUT to include project settings
+# .vscode/
 
 # Output folder used by Webpack or other FE stuff
 **/node_modules/*

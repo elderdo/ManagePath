@@ -13,7 +13,7 @@ A cross-platform command-line tool for managing and analyzing the PATH environme
 
 ## Installation
 
-### Prerequisites
+### Prerequisites 1 of 2
 
 - [.NET 9.0 SDK](https://dotnet.microsoft.com/download) or later
 
@@ -68,21 +68,27 @@ dotnet run -- path list -e -v -n
 ### Options
 
 #### `--target, -t <Process|User|Machine>`
+
 Specify which environment variable scope to read:
+
 - `Process` - Process-level PATH (default)
 - `User` - User-level PATH (HKEY_CURRENT_USER)
 - `Machine` - System-level PATH (HKEY_LOCAL_MACHINE)
 
 #### `--effective, -e`
+
 Show the effective PATH (merged view of Machine + User + Process). This represents what the current process actually sees. Overrides `--target` option.
 
 #### `--validate, -v`
+
 Validate each directory:
+
 - Checks if the directory exists
 - Checks if it contains executable files
 - Shows validation status for each entry
 
 #### `--number, -n`
+
 Display line numbers for each directory entry.
 
 ## Examples
@@ -94,7 +100,8 @@ dotnet run -- path list -e -v -n
 ```
 
 **Output:**
-```
+
+```text
 1: C:\Windows\system32
     [Valid]
 2: C:\Windows
@@ -115,7 +122,8 @@ dotnet run -- path list --target User -n
 ```
 
 **Output:**
-```
+
+```text
 1: C:\Users\YourName\AppData\Local\Programs\Python\Python39
 2: C:\Users\YourName\bin
 3: C:\Users\YourName\.dotnet\tools
@@ -131,7 +139,7 @@ dotnet run -- path list --target Machine --validate
 
 The project is organized into a clean, maintainable structure:
 
-```
+```text
 ManagePath/
 ├── Models/
 │   └── PathEntry.cs          # Domain model for PATH entries
@@ -153,17 +161,100 @@ ManagePath/
 
 ## Executable Detection
 
-### Windows
+### Windows Part 1
+
 Uses the `PATHEXT` environment variable to determine executable extensions:
+
 - `.COM`, `.EXE`, `.BAT`, `.CMD`, `.VBS`, `.JS`, `.WSF`, `.PS1`, etc.
 - Custom extensions like `.PL` are also included
 
+#### Configuring .PL (Perl) File Associations on Windows
+
+For `.pl` files to be executable from the command line, you need to configure Windows file associations. ManagePath will **detect** `.pl` files as potential executables, but Windows needs to know how to **run** them.
+
+##### Prerequisites 2 of 2
+
+- Perl must be installed (e.g., [Strawberry Perl](https://strawberryperl.com/) or [ActivePerl](https://www.activestate.com/products/perl/))
+
+##### Method 1: Using Command Prompt (Recommended - requires Administrator)
+
+```cmd
+# Associate .pl extension with PerlScript file type
+assoc .pl=PerlScript
+
+# Tell Windows how to execute PerlScript files
+# Replace C:\Perl64\bin\perl.exe with your actual Perl path
+ftype PerlScript="C:\Perl64\bin\perl.exe" "%1" %*
+
+# Add .PL to PATHEXT so you can run scripts without typing the extension
+setx PATHEXT "%PATHEXT%;.PL"
+```
+
+##### Method 2: Using Registry Editor (requires Administrator)
+
+1. Open Registry Editor (`regedit`)
+2. Navigate to `HKEY_CLASSES_ROOT\.pl`
+3. Set the default value to `PerlScript`
+4. Create a new key: `HKEY_CLASSES_ROOT\PerlScript\shell\open\command`
+5. Set its default value to: `"C:\Perl64\bin\perl.exe" "%1" %*`
+6. Add `.PL` to `PATHEXT` in:
+   - `HKEY_CURRENT_USER\Environment\PATHEXT` (User-level), or
+   - `HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Environment\PATHEXT` (System-level)
+
+##### Method 3: Using PowerShell (requires Administrator)
+
+```powershell
+# Set file association
+cmd /c assoc .pl=PerlScript
+cmd /c ftype PerlScript="""C:\Perl64\bin\perl.exe"" ""%1"" %*"
+
+# Add to PATHEXT
+[Environment]::SetEnvironmentVariable(
+    "PATHEXT",
+    [Environment]::GetEnvironmentVariable("PATHEXT", "Machine") + ";.PL",
+    "Machine"
+)
+```
+
+##### Verification
+
+```cmd
+# Check file association
+assoc .pl
+ftype PerlScript
+
+# Check PATHEXT
+echo %PATHEXT%
+
+# Test by running a Perl script (without .pl extension if PATHEXT is configured)
+cd path\to\script
+myscript.pl
+# or just:
+myscript
+```
+
+##### Note
+
+After setting PATHEXT, you may need to restart your command prompt or terminal for changes to take effect.
+
 ### Linux/macOS
+
 Checks file permissions for execute bits (`UnixFileMode.UserExecute`)
+
+#### Making scripts executable on Unix
+
+```bash
+# Add execute permission
+chmod +x script.pl
+
+# Verify permissions
+ls -l script.pl
+# Output should show: -rwxr-xr-x (x = executable)
+```
 
 ## Building for Distribution
 
-### Windows
+### Windows Part 2
 
 ```bash
 dotnet publish -c Release -r win-x64 --self-contained /p:PublishSingleFile=true
@@ -216,5 +307,6 @@ If you encounter any issues or have questions, please [open an issue](https://gi
 
 ## Author
 
-**Douglas Elder**
+### Douglas Elder
+
 - GitHub: [@elderdo](https://github.com/elderdo)
