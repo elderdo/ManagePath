@@ -262,23 +262,133 @@ ls -l script.pl
 
 ## Building for Distribution
 
-### Windows Part 2
+Build the main application (not the test project) for your target platform. Choose the publishing method that best fits your needs.
+
+### Publishing Options
+
+#### Option 1: Framework-Dependent (Smallest Size - Recommended for Windows)
+
+Requires .NET 9.0 Runtime installed on the target machine. **Smallest file size (~200 KB)**.
 
 ```bash
-dotnet publish -c Release -r win-x64 --self-contained /p:PublishSingleFile=true
+# Windows - Single file, framework-dependent (SMALLEST)
+dotnet publish ManagePath/ManagePath.csproj -c Release -r win-x64
+
+# Linux - Single file, framework-dependent
+dotnet publish ManagePath/ManagePath.csproj -c Release -r linux-x64
+
+# macOS - Single file, framework-dependent  
+dotnet publish ManagePath/ManagePath.csproj -c Release -r osx-x64
 ```
 
-### Linux
+**Pros:**
+- Smallest executable size (~200 KB)
+- Uses shared .NET runtime on system
+- Faster publish time
+
+**Cons:**
+- Requires .NET 9.0 Runtime installed
+- User must install: [.NET 9.0 Runtime](https://dotnet.microsoft.com/download/dotnet/9.0)
+
+**Output:** `ManagePath/bin/Release/net9.0/win-x64/publish/ManagePath.exe`
+
+---
+
+#### Option 2: Self-Contained Single File (No Runtime Required)
+
+Includes .NET runtime in the executable. **Larger size (~70 MB)** but runs anywhere.
 
 ```bash
-dotnet publish -c Release -r linux-x64 --self-contained /p:PublishSingleFile=true
+# Windows - Self-contained, single file
+dotnet publish ManagePath/ManagePath.csproj -c Release -r win-x64 --self-contained
+
+# Linux - Self-contained, single file
+dotnet publish ManagePath/ManagePath.csproj -c Release -r linux-x64 --self-contained
+
+# macOS - Self-contained, single file
+dotnet publish ManagePath/ManagePath.csproj -c Release -r osx-x64 --self-contained
 ```
 
-### macOS
+**Pros:**
+- No .NET runtime installation required
+- Portable - runs on any Windows/Linux/macOS machine
+- Single executable file
+
+**Cons:**
+- Larger file size (~70 MB)
+- Longer publish time
+
+**Output:** `ManagePath/bin/Release/net9.0/win-x64/publish/ManagePath.exe`
+
+---
+
+#### Option 3: Self-Contained with Trimming (Smaller Self-Contained)
+
+Removes unused code to reduce size. **Medium size (~30-40 MB)**.
 
 ```bash
-dotnet publish -c Release -r osx-x64 --self-contained /p:PublishSingleFile=true
+# Windows - Self-contained with trimming
+dotnet publish ManagePath/ManagePath.csproj -c Release -r win-x64 --self-contained /p:PublishTrimmed=true
+
+# Linux - Self-contained with trimming
+dotnet publish ManagePath/ManagePath.csproj -c Release -r linux-x64 --self-contained /p:PublishTrimmed=true
+
+# macOS - Self-contained with trimming
+dotnet publish ManagePath/ManagePath.csproj -c Release -r osx-x64 --self-contained /p:PublishTrimmed=true
 ```
+
+**Pros:**
+- Smaller than full self-contained (~30-40 MB)
+- No runtime required
+- Single file
+
+**Cons:**
+- May have compatibility issues with reflection-heavy code
+- Longer publish time
+
+**Output:** `ManagePath/bin/Release/net9.0/win-x64/publish/ManagePath.exe`
+
+---
+
+### Recommended Approach
+
+**For Windows machines with .NET Runtime:**
+```bash
+dotnet publish ManagePath/ManagePath.csproj -c Release -r win-x64
+```
+→ Produces smallest executable (~200 KB)
+
+**For distribution without runtime dependency:**
+```bash
+dotnet publish ManagePath/ManagePath.csproj -c Release -r win-x64 --self-contained
+```
+→ Larger (~70 MB) but runs anywhere
+
+### Verify the Build
+
+After publishing, test the executable:
+
+```bash
+# Navigate to publish folder
+cd ManagePath/bin/Release/net9.0/win-x64/publish/
+
+# Run the executable
+./ManagePath.exe path list -e -v
+```
+
+## Testing
+
+```bash
+# Standard publish
+dotnet publish ManagePath/ManagePath.csproj -c Release -r osx-x64 --self-contained
+
+# Single-file executable (recommended)
+dotnet publish ManagePath/ManagePath.csproj -c Release -r osx-x64 --self-contained /p:PublishSingleFile=true
+```
+
+Output: `ManagePath/bin/Release/net9.0/osx-x64/publish/ManagePath`
+
+**Note:** Always specify `ManagePath/ManagePath.csproj` to ensure you're publishing the main application, not the test project.
 
 ## Testing
 
