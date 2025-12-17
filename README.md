@@ -141,13 +141,21 @@ The project is organized into a clean, maintainable structure:
 
 ```text
 ManagePath/
-├── Models/
-│   └── PathEntry.cs          # Domain model for PATH entries
-├── Services/
-│   ├── PathService.cs        # PATH reading and parsing
-│   └── PathValidator.cs      # Directory validation logic
-├── Formatters/
-│   └── PathFormatter.cs      # Console output formatting
+├── ManagePath/                # Main application project
+│   ├── Models/
+│   │   └── PathEntry.cs       # Domain model for PATH entries
+│   ├── Services/
+│   │   ├── PathService.cs     # PATH reading and parsing
+│   │   └── PathValidator.cs   # Directory validation logic
+│   ├── Formatters/
+│   │   └── PathFormatter.cs   # Console output formatting
+│   ├── GlobalUsings.cs        # Global using directives
+│   └── Program.cs             # CLI entry point
+└── ManagePath.Tests/          # Unit test project
+    ├── Services/
+    │   └── PathServiceTests.cs    # Tests for PathService
+    └── ManagePath.Tests.csproj    # Test project file
+```
 ├── GlobalUsings.cs           # Global using directives
 └── Program.cs                # CLI entry point
 ```
@@ -271,6 +279,75 @@ dotnet publish -c Release -r linux-x64 --self-contained /p:PublishSingleFile=tru
 ```bash
 dotnet publish -c Release -r osx-x64 --self-contained /p:PublishSingleFile=true
 ```
+
+## Testing
+
+The project includes comprehensive unit tests to ensure reliability across different platforms and scenarios.
+
+### Running Tests
+
+```bash
+# Run all tests
+dotnet test
+
+# Run tests with detailed output
+dotnet test --verbosity normal
+
+# Run tests for specific project
+dotnet test ManagePath.Tests/ManagePath.Tests.csproj
+
+# Run tests with code coverage
+dotnet test --collect:"XPlat Code Coverage"
+```
+
+### Test Structure
+
+The test project (`ManagePath.Tests`) uses xUnit as the testing framework and includes:
+
+**PathServiceTests** - Tests for PATH environment variable reading and parsing:
+- `GetDirectories_WithNullTarget_ReturnsEffectivePath()` - Tests effective PATH retrieval
+- `GetDirectories_WithUserTarget_ReturnsUserPath()` - Tests user-level PATH reading
+- `GetDirectories_WithMachineTarget_ReturnsMachinePath()` - Tests system-level PATH reading
+- `GetDirectories_WithProcessTarget_ReturnsProcessPath()` - Tests process-level PATH reading
+- `GetDirectories_SplitsByPathSeparator()` - Tests correct parsing with platform-specific separators
+- `GetDirectories_HandlesEmptyPath()` - Tests edge cases with empty PATH values
+- `GetTargetDisplayName_ReturnsCorrectNames()` - Tests display name mapping
+
+### Writing New Tests
+
+To add new tests:
+
+1. Create test files in the appropriate folder under `ManagePath.Tests/`
+2. Use the `[Fact]` attribute for simple tests
+3. Use the `[Theory]` and `[InlineData]` attributes for parameterized tests
+4. Follow the Arrange-Act-Assert pattern
+
+Example:
+
+```csharp
+[Fact]
+public void MyTest_WithCondition_ReturnsExpectedResult()
+{
+    // Arrange: Set up test data
+    var service = new MyService();
+    
+    // Act: Execute the method being tested
+    var result = service.MyMethod();
+    
+    // Assert: Verify the result
+    Assert.NotNull(result);
+    Assert.Equal(expectedValue, result);
+}
+```
+
+### Test Coverage
+
+The tests cover:
+- ✅ Environment variable reading from different targets (Process, User, Machine)
+- ✅ PATH parsing with platform-specific separators
+- ✅ Edge cases (empty PATH, whitespace handling)
+- ✅ Display name formatting
+- 🔄 More tests planned for PathValidator and PathFormatter (see Roadmap)
 
 ## Contributing
 

@@ -22,4 +22,8 @@
     <ProjectReference Include="..\ManagePath\ManagePath.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\ManagePath\ManagePath.csproj" />
+  </ItemGroup>
+
 </Project>
