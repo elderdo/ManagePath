@@ -57,10 +57,27 @@ public class PathValidator
         return directories.Select(Validate);
     }
 
+    /// <summary>
+    /// Checks if a directory contains executable files using platform-specific detection logic.
+    /// </summary>
+    /// <remarks>
+    /// Windows: Checks for files matching known executable extensions (from PATHEXT).
+    /// Unix/Linux/macOS: Checks for files with the execute permission bit set.
+    /// 
+    /// Uses LINQ's Any() method which returns true if at least one element satisfies the condition,
+    /// short-circuiting as soon as a match is found for optimal performance.
+    /// </remarks>
+    /// <param name="dir">The directory path to check</param>
+    /// <returns>True if the directory contains at least one executable file; otherwise, false</returns>
     private bool HasExecutableFiles(string dir)
     {
         if (OperatingSystem.IsWindows())
         {
+            // LINQ Any() with lambda: Tests if ANY extension has matching files in the directory
+            // Short-circuits on first match, avoiding unnecessary file system queries
+            // Lambda parameter: ext = current extension being tested (e.g., ".exe", ".bat")
+            // String interpolation: $"*{ext}" creates wildcard pattern like "*.exe"
+            // Directory.GetFiles() returns array of matching files; Length > 0 means files found
             return _executableExtensions.Any(ext =>
                 Directory.GetFiles(dir, $"*{ext}").Length > 0);
         }
@@ -68,11 +85,20 @@ public class PathValidator
         {
             try
             {
+                // Get all files in directory, then check execute permissions using LINQ
+                // LINQ Any() with lambda: Tests if ANY file has execute permission
+                // Lambda parameter: file = full path to current file being tested
+                // File.GetUnixFileMode() returns UnixFileMode flags for file permissions
+                // Bitwise AND (&) checks if UserExecute flag is set in the permission bits
+                // UnixFileMode.UserExecute = 0x0100 (owner execute permission bit)
+                // Result != 0 means the execute bit is set, making it an executable file
                 return Directory.GetFiles(dir)
                     .Any(file => (File.GetUnixFileMode(file) & UnixFileMode.UserExecute) != 0);
             }
             catch
             {
+                // Catch permission errors or other I/O exceptions
+                // Returns false if we can't read directory contents or file permissions
                 return false;
             }
         }
