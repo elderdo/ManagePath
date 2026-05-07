@@ -1,4 +1,11 @@
 {
+    "dotnet.defaultSolution": "ManagePath.slnx",
+    "omnisharp.useModernNet": true,
+    "files.exclude": {
+        "**/bin": true,
+        "**/obj": true
+    },
+    "csharp.suppressDotnetRestoreNotification": true,
     "cSpell.words": [
         "CHOCOL",
         "COMMUN",

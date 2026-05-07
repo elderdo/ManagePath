@@ -4,6 +4,9 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
+  <Folder Name="/Solution Items/">
+    <File Path="README.md" />
+  </Folder>
   <Project Path="ManagePath.Tests/ManagePath.Tests.csproj" />
   <Project Path="ManagePath/ManagePath.csproj" />
 </Solution>

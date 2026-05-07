@@ -1,6 +1,6 @@
 # ManagePath
 
-A cross-platform command-line tool for managing and analyzing the PATH environment variable on Windows, Linux, and macOS.
+A cross-platform, **read-only** command-line tool for analyzing and inspecting the PATH environment variable on Windows, Linux, and macOS. (PATH modification features are planned but not yet implemented.)
 
 ## Features
 
@@ -10,14 +10,14 @@ A cross-platform command-line tool for managing and analyzing the PATH environme
 - 🔍 **Smart executable detection** - Uses `PATHEXT` on Windows and file permissions on Unix-like systems
 - 🎯 **Custom extensions** - Supports additional executable extensions (e.g., `.pl`, `.py`)
 - 🌐 **Cross-platform** - Works on Windows, Linux, and macOS
+- 🛑 **Read-only** - Does not modify PATH (yet)
 
 ## Installation
 
-### Prerequisites 1 of 2
+- This project uses the Visual Studio `.slnx` (Solution Filter) format. You must use a compatible version of Visual Studio and .NET SDK.
 
-- [.NET 9.0 SDK](https://dotnet.microsoft.com/download) or later
-
-### Build from Source
+- **Minimum required:** [.NET 9.0 SDK](https://dotnet.microsoft.com/download/dotnet/9.0) or later
+- **Recommended:** Visual Studio 2022 version 17.10 or later (for full `.slnx` support)
 
 ```bash
 git clone https://github.com/elderdo/ManagePath.git
@@ -48,6 +48,35 @@ dotnet run -- path list -h
 
 # List all PATH directories (effective PATH)
 dotnet run -- path list --effective
+
+### VS Code Tasks
+
+This repository includes a preconfigured `.vscode/tasks.json` file for Visual Studio Code users. You can access these tasks from the Command Palette (`Ctrl+Shift+P` > "Run Task") or by using the `Terminal > Run Task...` menu:
+
+- **build** — Runs `dotnet build` to compile the solution.
+- **test** — Runs `dotnet test` to execute all unit tests.
+- **run (effective list)** — Runs the app with `dotnet run -- path list -e -v -n` to show a validated, numbered list of effective PATH entries.
+
+These tasks work cross-platform (Windows, macOS, Linux) and simplify common development workflows in VS Code.
+
+This project works cross-platform in VS Code (Windows, macOS, Linux).
+
+- **.NET SDK:** [.NET 9.0 SDK](https://dotnet.microsoft.com/download/dotnet/9.0) must be installed on your system.
+- **C# Extension:** [C# for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csharp) (by Microsoft) is required for C# language support.
+- **macOS:**
+    - After installing the .NET SDK, you may need to add the SDK to your shell profile. See [Microsoft’s macOS install guide](https://learn.microsoft.com/dotnet/core/install/macos#add-to-path) for details.
+    - Use the integrated terminal (`zsh` or `bash`) for best compatibility.
+- **Linux:**
+    - Install the .NET 9.0 SDK using your distribution’s package manager or from [Microsoft’s Linux install guide](https://learn.microsoft.com/dotnet/core/install/linux).
+    - Ensure your shell profile (`.bashrc`, `.zshrc`, etc.) includes the .NET tools path if needed.
+- **How to use in VS Code:**
+    - Open the project folder in VS Code. You may open `ManagePath.slnx` or the root folder.
+    - Use the built-in terminal to run:
+        - `dotnet build`
+        - `dotnet test`
+        - `dotnet run -- path list -e -v -n`
+    - You can also use the C# extension’s Test Explorer for running tests.
+
 
 # List PATH directories from User environment variable
 dotnet run -- path list --target User
@@ -135,9 +164,9 @@ dotnet run -- path list --target User -n
 dotnet run -- path list --target Machine --validate
 ```
 
-## Architecture
+## Architecture & Design
 
-The project is organized into a clean, maintainable structure:
+The project is organized into a clean, maintainable structure. The CLI is built using [System.CommandLine](https://github.com/dotnet/command-line-api) and all core logic is in the `ManagePath` project, with comprehensive tests in `ManagePath.Tests`.
 
 ```text
 ManagePath/
@@ -156,16 +185,14 @@ ManagePath/
     │   └── PathServiceTests.cs    # Tests for PathService
     └── ManagePath.Tests.csproj    # Test project file
 ```
-├── GlobalUsings.cs           # Global using directives
-└── Program.cs                # CLI entry point
-```
 
 ### Key Components
 
 - **PathEntry** - Immutable record representing a PATH directory with validation state
-- **PathService** - Reads PATH from different environment variable targets
-- **PathValidator** - Validates directories (existence, executable detection)
+- **PathService** - Reads PATH from different environment variable targets and parses entries
+- **PathValidator** - Validates directories (existence, executable detection, platform-specific logic)
 - **PathFormatter** - Handles console output with formatting options
+- **Program.cs** - CLI entry point, command and option wiring
 
 ## Executable Detection
 
@@ -282,11 +309,13 @@ dotnet publish ManagePath/ManagePath.csproj -c Release -r osx-x64
 ```
 
 **Pros:**
+
 - Smallest executable size (~200 KB)
 - Uses shared .NET runtime on system
 - Faster publish time
 
 **Cons:**
+
 - Requires .NET 9.0 Runtime installed
 - User must install: [.NET 9.0 Runtime](https://dotnet.microsoft.com/download/dotnet/9.0)
 
@@ -310,11 +339,13 @@ dotnet publish ManagePath/ManagePath.csproj -c Release -r osx-x64 --self-contain
 ```
 
 **Pros:**
+
 - No .NET runtime installation required
 - Portable - runs on any Windows/Linux/macOS machine
 - Single executable file
 
 **Cons:**
+
 - Larger file size (~70 MB)
 - Longer publish time
 
@@ -338,11 +369,13 @@ dotnet publish ManagePath/ManagePath.csproj -c Release -r osx-x64 --self-contain
 ```
 
 **Pros:**
+
 - Smaller than full self-contained (~30-40 MB)
 - No runtime required
 - Single file
 
 **Cons:**
+
 - May have compatibility issues with reflection-heavy code
 - Longer publish time
 
@@ -353,15 +386,19 @@ dotnet publish ManagePath/ManagePath.csproj -c Release -r osx-x64 --self-contain
 ### Recommended Approach
 
 **For Windows machines with .NET Runtime:**
+
 ```bash
 dotnet publish ManagePath/ManagePath.csproj -c Release -r win-x64
 ```
+
 → Produces smallest executable (~200 KB)
 
 **For distribution without runtime dependency:**
+
 ```bash
 dotnet publish ManagePath/ManagePath.csproj -c Release -r win-x64 --self-contained
 ```
+
 → Larger (~70 MB) but runs anywhere
 
 ### Verify the Build
@@ -376,7 +413,7 @@ cd ManagePath/bin/Release/net9.0/win-x64/publish/
 ./ManagePath.exe path list -e -v
 ```
 
-## Testing
+## Testing & Test Coverage
 
 ```bash
 # Standard publish
@@ -392,7 +429,7 @@ Output: `ManagePath/bin/Release/net9.0/osx-x64/publish/ManagePath`
 
 ## Testing
 
-The project includes comprehensive unit tests to ensure reliability across different platforms and scenarios.
+The project includes comprehensive unit tests to ensure reliability across different platforms and scenarios. Tests are organized by component and cover both typical and edge cases, including platform-specific behaviors.
 
 ### Running Tests
 
@@ -412,16 +449,22 @@ dotnet test --collect:"XPlat Code Coverage"
 
 ### Test Structure
 
-The test project (`ManagePath.Tests`) uses xUnit as the testing framework and includes:
+The test project (`ManagePath.Tests`) uses xUnit and includes:
 
-**PathServiceTests** - Tests for PATH environment variable reading and parsing:
-- `GetDirectories_WithNullTarget_ReturnsEffectivePath()` - Tests effective PATH retrieval
-- `GetDirectories_WithUserTarget_ReturnsUserPath()` - Tests user-level PATH reading
-- `GetDirectories_WithMachineTarget_ReturnsMachinePath()` - Tests system-level PATH reading
-- `GetDirectories_WithProcessTarget_ReturnsProcessPath()` - Tests process-level PATH reading
-- `GetDirectories_SplitsByPathSeparator()` - Tests correct parsing with platform-specific separators
-- `GetDirectories_HandlesEmptyPath()` - Tests edge cases with empty PATH values
-- `GetTargetDisplayName_ReturnsCorrectNames()` - Tests display name mapping
+- **PathServiceTests**: Verifies PATH environment variable reading and parsing for all supported scopes (Process, User, Machine, Effective), correct splitting by platform-specific separator, handling of empty/whitespace PATH, and display name mapping.
+- **PathValidatorTests**: Checks directory existence, detection of executables (using PATHEXT on Windows and permissions on Unix), handling of empty/non-executable directories, `.pl`/custom extension support, and correct property population. Includes platform-specific and edge-case tests.
+- **PathEntryTests**: Confirms the correctness of the `IsValid` property, record equality, and deconstruction logic for PATH entry records.
+
+#### Example Test Coverage
+
+- ✅ Environment variable reading from all targets (Process, User, Machine, Effective)
+- ✅ PATH parsing with platform-specific separators
+- ✅ Edge cases (empty PATH, whitespace handling)
+- ✅ Directory existence and executable detection (Windows/Unix)
+- ✅ Custom and `.pl` extension support
+- ✅ Record equality and deconstruction
+- ✅ Display name formatting
+- 🔄 More tests planned for future features (see Roadmap)
 
 ### Writing New Tests
 
@@ -453,6 +496,7 @@ public void MyTest_WithCondition_ReturnsExpectedResult()
 ### Test Coverage
 
 The tests cover:
+
 - ✅ Environment variable reading from different targets (Process, User, Machine)
 - ✅ PATH parsing with platform-specific separators
 - ✅ Edge cases (empty PATH, whitespace handling)
