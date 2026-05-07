@@ -3,6 +3,13 @@ namespace ManagePath.Services;
 /// <summary>
 /// Service for reading and parsing PATH environment variable.
 /// </summary>
+/// <remarks>
+/// This service is responsible for reading PATH values from the operating system
+/// and splitting them into individual folder entries.
+///
+/// In other words, it turns one long PATH string into a string array that the rest
+/// of the app can work with more easily.
+/// </remarks>
 public class PathService
 {
     /// <summary>

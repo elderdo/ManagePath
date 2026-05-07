@@ -2,6 +2,15 @@ using ManagePath.Services;
 
 namespace ManagePath.Tests.Services;
 
+// These tests verify that PathService reads and parses PATH correctly.
+//
+// They make sure the service behaves properly for:
+// - effective PATH
+// - user PATH
+// - machine PATH
+// - process PATH
+// - empty PATH values
+
 /// <summary>
 /// Unit tests for PathService class.
 /// Tests PATH environment variable reading and parsing functionality.

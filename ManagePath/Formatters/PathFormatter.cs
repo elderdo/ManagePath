@@ -1,5 +1,10 @@
 namespace ManagePath.Formatters;
 
+// This class is responsible for showing results to the user in the console.
+//
+// It does not read PATH and it does not validate directories.
+// Its job is only to format and print information in a clear way.
+
 /// <summary>
 /// Formats and displays PATH entries to the console.
 /// </summary>
